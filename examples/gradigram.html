@@ -1,0 +1,106 @@
+<script type="module" src="../td-pull-to-refresh.js"></script>
+<style>
+	body {
+		margin: 0;
+	}
+
+	header {
+		border-bottom: #dedede solid 5px;
+		text-align: center;
+		padding: 2em;
+	}
+
+	section {
+		display: flex;
+		gap: 1em;
+		width: 60%;
+		margin: auto;
+		flex-direction: column;
+		align-items: center;
+	}
+
+	main {
+		margin: 1em;
+	}
+</style>
+
+<!-- define a new gradient-card component -->
+<script src="https://unpkg.com/tram-deco@6"></script>
+<template id="defs">
+	<gradigram-card>
+		<template shadowrootmode="open">
+			<style>
+				:host {
+					display: block;
+					border: 1em solid #ababab;
+					border-radius: 1em;
+					box-shadow: 5px 5px 5px #dedede;
+				}
+				div {
+					width: 500px;
+					aspect-ratio: 1 / 1;
+					margin: -0.5em;
+					border-radius: 1em;
+				}
+			</style>
+			<div></div>
+		</template>
+		<script td-method="connectedCallback">
+			this.load();
+		</script>
+		<script td-method="load">
+			const rotation = Math.random() * 360;
+			const [r1, g1, b1] = [Math.random() * 255, Math.random() * 255, Math.random() * 255];
+			const [r2, g2, b2] = [Math.random() * 255, Math.random() * 255, Math.random() * 255];
+			this.shadowRoot.querySelector('div').style = `
+				background: linear-gradient(${rotation}deg, rgb(${r1},${g1},${b1}) 0%, rgb(${r2},${g2},${b2}) 100%);
+			`;
+		</script>
+	</gradigram-card>
+</template>
+
+<script>
+	TramDeco.processTemplate(defs);
+</script>
+
+<pull-to-refresh id="pullElement">
+	<header slot="pull-area">
+		<label for="file">Loading</label>
+		<progress id="loadingProgress" value="0" max="100"></progress>
+		<div id="pullText">Pull To Refresh</div>
+	</header>
+	<main>
+		<h1>Gradigram</h1>
+		<p>All your favorite gradients. Pull to refresh if you want to load the latest posts.</p>
+		<section>
+			<gradigram-card></gradigram-card>
+			<gradigram-card></gradigram-card>
+			<gradigram-card></gradigram-card>
+			<gradigram-card></gradigram-card>
+			<gradigram-card></gradigram-card>
+		</section>
+	</main>
+</pull-to-refresh>
+
+<script>
+	// set the pull function on the web-component,
+	//  this should be an async function, that resolves once loading has finished
+	pullElement.pull = async () => {
+		pullText.style.display = 'none';
+		// wait until progress bar hits 100
+		while (loadingProgress.value < 100) {
+			await new Promise((resolve) => setTimeout(resolve, 250));
+			loadingProgress.value += 10;
+		}
+
+		// after waiting, trigger .load on all our cards
+		[...document.querySelectorAll('gradigram-card')].forEach((card) => card.load());
+
+		// set a timeout to reset the progress bar later
+		// (we won't await for this one, this just happens behind the scenes)
+		setTimeout(() => {
+			pullText.style.display = '';
+			loadingProgress.value = 0;
+		}, 1000);
+	};
+</script>

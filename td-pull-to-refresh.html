@@ -1,0 +1,47 @@
+<pull-to-refresh>
+	<template shadowrootmode="open">
+		<style>
+			:host {
+				display: block;
+				scroll-snap-type: y mandatory;
+				overflow: auto;
+				height: 100vh;
+				overscroll-behavior: contain;
+
+				flex-flow: column nowrap;
+			}
+
+			#mainContent::slotted(*) {
+				scroll-snap-align: start;
+				scroll-snap-stop: always;
+
+				min-height: 100vh;
+			}
+
+			#pullStop {
+				display: block;
+				scroll-snap-align: start;
+			}
+		</style>
+
+		<div id="pullStop"></div>
+		<slot id="pullArea" name="pull-area"></slot>
+		<slot id="mainContent"></slot>
+	</template>
+
+	<script td-method="connectedCallback">
+		// when the main content has been slotted in, scroll instantly to that element
+		this.shadowRoot.getElementById('mainContent').addEventListener('slotchange', () => {
+			this.mainContent = this.shadowRoot.getElementById('mainContent').assignedElements()[0];
+			this.mainContent.scrollIntoView({ behavior: 'instant' });
+		});
+
+		// add an event listener to this element for when scrolling ends, so we can trigger refresh
+		this.addEventListener('scrollend', async () => {
+			if (this.scrollTop <= 0) {
+				await this?.pull?.();
+				this.mainContent.scrollIntoView({ behavior: 'smooth' });
+			}
+		});
+	</script>
+</pull-to-refresh>
